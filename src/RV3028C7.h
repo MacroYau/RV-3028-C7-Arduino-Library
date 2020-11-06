@@ -91,6 +91,16 @@
 #define REG_EEPROM_OFFSET 0x36     // EEPROM Offset
 #define REG_EEPROM_BACKUP 0x37     // EEPROM Backup
 
+/* Bit Positions */
+
+#define BP_ALARM_AE 7
+#define BP_STATUS_AF 2
+#define BP_CONTROL_1_WADA 5
+#define BP_CONTROL_2_UIE 5
+#define BP_CONTROL_2_TIE 4
+#define BP_CONTROL_2_AIE 3
+#define BP_CONTROL_2_EIE 2
+
 #define DATETIME_COMPONENTS 7
 
 enum DateTimeComponent {
@@ -115,6 +125,23 @@ enum DayOfWeek {
 };
 typedef uint8_t DayOfWeek_t;
 
+enum AlarmMode {
+  ALARM_DISABLED = 0,
+  ALARM_ONCE_PER_DAY_OF_MONTH_OR_WEEK = 1,
+  ALARM_ONCE_PER_HOUR_PER_DAY_OF_MONTH_OR_WEEK = 2,
+  ALARM_ONCE_PER_DAY = 3,
+  ALARM_ONCE_PER_HOUR = 4
+};
+typedef uint8_t AlarmMode_t;
+
+enum InterruptType {
+  INTERRPUT_PERIODIC_TIME_UPDATE = BP_CONTROL_2_UIE,
+  INTERRUPT_PERIODIC_COUNTDOWN_TIMER = BP_CONTROL_2_TIE,
+  INTERRUPT_ALARM = BP_CONTROL_2_AIE,
+  INTERRUPT_EXTERNAL_EVENT = BP_CONTROL_2_EIE
+};
+typedef uint8_t InterruptType_t;
+
 class RV3028C7 {
 public:
   RV3028C7();
@@ -130,6 +157,18 @@ public:
                    uint8_t second = 0);
   void setDateTimeComponent(DateTimeComponent_t component, uint8_t value);
   bool synchronize();
+
+  bool setDateAlarm(AlarmMode_t mode, uint8_t dayOfMonth, uint8_t hour = 0,
+                    uint8_t minute = 0);
+  bool setWeekdayAlarm(AlarmMode_t mode, DayOfWeek_t dayOfWeek,
+                       uint8_t hour = 0, uint8_t minute = 0);
+  bool setDailyAlarm(uint8_t hour = 0, uint8_t minute = 0);
+  bool setHourlyAlarm(uint8_t minute = 0);
+
+  bool enableInterrupt(InterruptType_t type);
+  bool disableInterrupt(InterruptType_t type);
+  bool isInterruptDetected(InterruptType_t type);
+  bool clearInterrupt(InterruptType_t type);
 
   uint8_t convertToDecimal(uint8_t bcd);
   uint8_t convertToBCD(uint8_t decimal);

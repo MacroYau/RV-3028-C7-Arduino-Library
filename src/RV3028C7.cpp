@@ -235,6 +235,144 @@ bool RV3028C7::synchronize() {
                                DATETIME_COMPONENTS);
 }
 
+bool RV3028C7::setDateAlarm(AlarmMode_t mode, uint8_t dayOfMonth, uint8_t hour,
+                            uint8_t minute) {
+  // Clears AIE and AF bits to 0
+  uint8_t status = readByteFromRegister(REG_STATUS);
+  if (!writeByteToRegister(REG_STATUS, (status & ~(1 << BP_STATUS_AF)))) {
+    return false;
+  }
+  uint8_t control2 = readByteFromRegister(REG_CONTROL_2);
+  if (!writeByteToRegister(REG_CONTROL_2,
+                           (control2 & ~(1 << BP_CONTROL_2_AIE)))) {
+    return false;
+  }
+
+  // Sets WADA bit to 1
+  uint8_t control1 = readByteFromRegister(REG_CONTROL_1);
+  if (!writeByteToRegister(REG_CONTROL_1,
+                           (control1 | (1 << BP_CONTROL_1_WADA)))) {
+    return false;
+  }
+
+  // Sets alarm registers from arguments
+  uint8_t minutesAlarm = convertToBCD(minute);
+  uint8_t hoursAlarm = convertToBCD(hour);
+  uint8_t dateAlarm = convertToBCD(dayOfMonth);
+
+  // Sets AE_x bits according to alarm mode
+  if (mode == ALARM_ONCE_PER_DAY_OF_MONTH_OR_WEEK) {
+    dateAlarm &= ~(1 << BP_ALARM_AE);    // AE_WD = 0
+    hoursAlarm &= ~(1 << BP_ALARM_AE);   // AE_H = 0
+    minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
+  } else if (mode == ALARM_ONCE_PER_HOUR_PER_DAY_OF_MONTH_OR_WEEK) {
+    dateAlarm &= ~(1 << BP_ALARM_AE);    // AE_WD = 0
+    hoursAlarm |= (1 << BP_ALARM_AE);    // AE_H = 1
+    minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
+  } else if (mode == ALARM_ONCE_PER_DAY) {
+    dateAlarm |= (1 << BP_ALARM_AE);     // AE_WD = 1
+    hoursAlarm &= ~(1 << BP_ALARM_AE);   // AE_H = 0
+    minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
+  } else if (mode == ALARM_ONCE_PER_HOUR) {
+    dateAlarm |= (1 << BP_ALARM_AE);     // AE_WD = 1
+    hoursAlarm |= (1 << BP_ALARM_AE);    // AE_H = 1
+    minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
+  } else {
+    // All disabled
+    dateAlarm |= (1 << BP_ALARM_AE);    // AE_WD = 1
+    hoursAlarm |= (1 << BP_ALARM_AE);   // AE_H = 1
+    minutesAlarm |= (1 << BP_ALARM_AE); // AE_M = 1
+  }
+
+  uint8_t alarmRegisters[3] = {minutesAlarm, hoursAlarm, dateAlarm};
+  return writeBytesToRegisters(REG_ALARM_MINUTES, alarmRegisters, 3);
+}
+
+bool RV3028C7::setWeekdayAlarm(AlarmMode_t mode, DayOfWeek_t dayOfWeek,
+                               uint8_t hour, uint8_t minute) {
+  // Clears AIE and AF bits to 0
+  uint8_t status = readByteFromRegister(REG_STATUS);
+  if (!writeByteToRegister(REG_STATUS, (status & ~(1 << BP_STATUS_AF)))) {
+    return false;
+  }
+  uint8_t control2 = readByteFromRegister(REG_CONTROL_2);
+  if (!writeByteToRegister(REG_CONTROL_2,
+                           (control2 & ~(1 << BP_CONTROL_2_AIE)))) {
+    return false;
+  }
+
+  // Sets WADA bit to 0
+  uint8_t control1 = readByteFromRegister(REG_CONTROL_1);
+  if (!writeByteToRegister(REG_CONTROL_1,
+                           (control1 & ~(1 << BP_CONTROL_1_WADA)))) {
+    return false;
+  }
+
+  // Sets alarm registers from arguments
+  uint8_t minutesAlarm = convertToBCD(minute);
+  uint8_t hoursAlarm = convertToBCD(hour);
+  uint8_t dateAlarm = convertToBCD(dayOfMonth);
+
+  // Sets AE_x bits according to alarm mode
+  if (mode == ALARM_ONCE_PER_DAY_OF_MONTH_OR_WEEK) {
+    dateAlarm &= ~(1 << BP_ALARM_AE);    // AE_WD = 0
+    hoursAlarm &= ~(1 << BP_ALARM_AE);   // AE_H = 0
+    minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
+  } else if (mode == ALARM_ONCE_PER_HOUR_PER_DAY_OF_MONTH_OR_WEEK) {
+    dateAlarm &= ~(1 << BP_ALARM_AE);    // AE_WD = 0
+    hoursAlarm |= (1 << BP_ALARM_AE);    // AE_H = 1
+    minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
+  } else if (mode == ALARM_ONCE_PER_DAY) {
+    dateAlarm |= (1 << BP_ALARM_AE);     // AE_WD = 1
+    hoursAlarm &= ~(1 << BP_ALARM_AE);   // AE_H = 0
+    minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
+  } else if (mode == ALARM_ONCE_PER_HOUR) {
+    dateAlarm |= (1 << BP_ALARM_AE);     // AE_WD = 1
+    hoursAlarm |= (1 << BP_ALARM_AE);    // AE_H = 1
+    minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
+  } else {
+    // All disabled
+    dateAlarm |= (1 << BP_ALARM_AE);    // AE_WD = 1
+    hoursAlarm |= (1 << BP_ALARM_AE);   // AE_H = 1
+    minutesAlarm |= (1 << BP_ALARM_AE); // AE_M = 1
+  }
+
+  uint8_t alarmRegisters[3] = {minutesAlarm, hoursAlarm, dateAlarm};
+  return writeBytesToRegisters(REG_ALARM_MINUTES, alarmRegisters, 3);
+}
+
+bool RV3028C7::setDailyAlarm(uint8_t hour, uint8_t minute) {
+  return setDateAlarm(ALARM_ONCE_PER_DAY, 1, hour, minute);
+}
+
+bool RV3028C7::setHourlyAlarm(uint8_t minute) {
+  return setDateAlarm(ALARM_ONCE_PER_HOUR, 1, 0, minute);
+}
+
+bool RV3028C7::enableInterrupt(InterruptType_t type) {
+  uint8_t control2 = readByteFromRegister(REG_CONTROL_2);
+  control2 |= (1 << type);
+  return writeByteToRegister(REG_CONTROL_2, control2);
+}
+
+bool RV3028C7::disableInterrupt(InterruptType_t type) {
+  uint8_t control2 = readByteFromRegister(REG_CONTROL_2);
+  control2 &= ~(1 << type);
+  return writeByteToRegister(REG_CONTROL_2, control2);
+}
+
+bool RV3028C7::isInterruptDetected(InterruptType_t type) {
+  uint8_t status = readByteFromRegister(REG_STATUS);
+  status &= (1 << (type - 1)); // Interrupt flag bit positions are offset by 1
+  return (status > 0);
+}
+
+bool RV3028C7::clearInterrupt(InterruptType_t type) {
+  uint8_t status = readByteFromRegister(REG_STATUS);
+  status &= ~(1 << (type - 1));
+  return writeByteToRegister(REG_STATUS, status);
+}
+
 uint8_t RV3028C7::convertToDecimal(uint8_t bcd) {
   return (bcd / 16 * 10) + (bcd % 16);
 }
