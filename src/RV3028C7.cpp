@@ -39,7 +39,7 @@ uint32_t RV3028C7::getUnixTimestamp() {
 }
 
 bool RV3028C7::setUnixTimestamp(uint32_t secondsSinceEpoch,
-                                bool syncCalendar = true) {
+                                bool syncCalendar) {
   uint8_t ts[4] = {
       (uint8_t)secondsSinceEpoch, (uint8_t)(secondsSinceEpoch >> 8),
       (uint8_t)(secondsSinceEpoch >> 16), (uint8_t)(secondsSinceEpoch >> 24)};

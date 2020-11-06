@@ -188,8 +188,6 @@ public:
   bool writeByteToRegister(uint8_t address, uint8_t value);
 
 private:
-  const uint8_t _DAYS_IN_MONTH[12] =
-      [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
   uint8_t _dateTime[DATETIME_COMPONENTS];
   TwoWire *_i2cPort;
 };
