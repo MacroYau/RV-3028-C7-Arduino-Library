@@ -16,7 +16,7 @@ bool RV3028C7::begin(TwoWire &wirePort) {
 
   // Reads RESET bit to pseudo-verify that the part is a RV-3028-C7
   uint8_t value = readByteFromRegister(REG_CONTROL_2);
-  if (value & 0x01 == 0x00) {
+  if ((value & 0x01) == 0x00) {
     return true;
   } else {
     return false;
