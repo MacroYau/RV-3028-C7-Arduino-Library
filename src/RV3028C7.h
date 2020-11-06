@@ -147,6 +147,9 @@ public:
   RV3028C7();
   bool begin(TwoWire &wirePort = Wire);
 
+  uint32_t getUnixTimestamp();
+  bool setUnixTimestamp(uint32_t secondsSinceEpoch, bool syncCalendar = true);
+
   char *getCurrentDateTime();
   void setDateTimeFromISO8601(String iso8601);
   void setDateTimeFromISO8601(const char *iso8601);
@@ -154,7 +157,7 @@ public:
   void setDateTimeFromHTTPHeader(const char *str);
   bool setDateTime(uint16_t year, uint8_t month, uint8_t dayOfMonth,
                    DayOfWeek_t dayOfWeek, uint8_t hour, uint8_t minute,
-                   uint8_t second = 0);
+                   uint8_t second = 0, bool syncUnixTime = true);
   void setDateTimeComponent(DateTimeComponent_t component, uint8_t value);
   bool synchronize();
 
@@ -170,6 +173,10 @@ public:
   bool isInterruptDetected(InterruptType_t type);
   bool clearInterrupt(InterruptType_t type);
 
+  uint32_t convertToUnixTimestamp(uint16_t year, uint8_t month,
+                                  uint8_t dayOfMonth, uint8_t hour,
+                                  uint8_t minute, uint8_t second);
+
   uint8_t convertToDecimal(uint8_t bcd);
   uint8_t convertToBCD(uint8_t decimal);
 
@@ -181,6 +188,8 @@ public:
   bool writeByteToRegister(uint8_t address, uint8_t value);
 
 private:
+  const uint8_t _DAYS_IN_MONTH[12] =
+      [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
   uint8_t _dateTime[DATETIME_COMPONENTS];
   TwoWire *_i2cPort;
 };

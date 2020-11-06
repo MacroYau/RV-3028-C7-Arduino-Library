@@ -6,6 +6,8 @@
   https://github.com/MacroYau/RV-3028-C7-Arduino-Library
 */
 
+#include <time.h>
+
 #include "RV3028C7.h"
 
 RV3028C7::RV3028C7() {}
@@ -20,6 +22,35 @@ bool RV3028C7::begin(TwoWire &wirePort) {
     return true;
   } else {
     return false;
+  }
+}
+
+uint32_t RV3028C7::getUnixTimestamp() {
+  uint8_t ts[4];
+  readBytesFromRegisters(REG_UNIX_TIME_0, ts, 4);
+  uint32_t result1 = (ts[3] << 24) | (ts[2] << 16) | (ts[1] << 8) | ts[0];
+  readBytesFromRegisters(REG_UNIX_TIME_0, ts, 4);
+  uint32_t result2 = (ts[3] << 24) | (ts[2] << 16) | (ts[1] << 8) | ts[0];
+  if (result1 == result2) {
+    return result1;
+  } else {
+    return getUnixTimestamp();
+  }
+}
+
+bool RV3028C7::setUnixTimestamp(uint32_t secondsSinceEpoch,
+                                bool syncCalendar = true) {
+  uint8_t ts[4] = {
+      (uint8_t)secondsSinceEpoch, (uint8_t)(secondsSinceEpoch >> 8),
+      (uint8_t)(secondsSinceEpoch >> 16), (uint8_t)(secondsSinceEpoch >> 24)};
+  writeBytesToRegisters(REG_UNIX_TIME_0, ts, 4);
+
+  if (syncCalendar) {
+    time_t t = secondsSinceEpoch;
+    struct tm *dateTime = gmtime(&t);
+    setDateTime(dateTime->tm_year + 1900, dateTime->tm_mon + 1,
+                dateTime->tm_mday, static_cast<DayOfWeek_t>(dateTime->tm_wday),
+                dateTime->tm_hour, dateTime->tm_min, dateTime->tm_sec, false);
   }
 }
 
@@ -179,7 +210,7 @@ void RV3028C7::setDateTimeFromHTTPHeader(const char *str) {
 
 bool RV3028C7::setDateTime(uint16_t year, uint8_t month, uint8_t dayOfMonth,
                            DayOfWeek_t dayOfWeek, uint8_t hour, uint8_t minute,
-                           uint8_t second) {
+                           uint8_t second, bool syncUnixTime) {
   // Year 2000 AD is the earliest allowed year in this implementation
   if (year < 2000) {
     return false;
@@ -218,6 +249,12 @@ bool RV3028C7::setDateTime(uint16_t year, uint8_t month, uint8_t dayOfMonth,
     return false;
   }
   _dateTime[DATETIME_SECOND] = convertToBCD(second);
+
+  if (syncUnixTime) {
+    uint32_t unixTimestamp =
+        convertToUnixTimestamp(year, month, dayOfMonth, hour, minute, second);
+    setUnixTimestamp(unixTimestamp, false);
+  }
 
   return true;
 }
@@ -371,6 +408,20 @@ bool RV3028C7::clearInterrupt(InterruptType_t type) {
   uint8_t status = readByteFromRegister(REG_STATUS);
   status &= ~(1 << (type - 1));
   return writeByteToRegister(REG_STATUS, status);
+}
+
+uint32_t RV3028C7::convertToUnixTimestamp(uint16_t year, uint8_t month,
+                                          uint8_t dayOfMonth, uint8_t hour,
+                                          uint8_t minute, uint8_t second) {
+  struct tm tm;
+  tm.tm_sec = second;
+  tm.tm_min = minute;
+  tm.tm_hour = hour;
+  tm.tm_mday = dayOfMonth;
+  tm.tm_mon = month - 1;
+  tm.tm_year = year - 1900;
+  tm.tm_isdst = 0;
+  return mktime(&tm);
 }
 
 uint8_t RV3028C7::convertToDecimal(uint8_t bcd) {
