@@ -1,0 +1,47 @@
+#######################################
+# Syntax Coloring Map For RV3028C7
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+RV3028C7	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+getCurrentDateTime	KEYWORD2
+setDateTimeFromISO8601	KEYWORD2
+setDateTimeFromHTTPHeader	KEYWORD2
+setDateTime	KEYWORD2
+setDateTimeComponent	KEYWORD2
+synchronize	KEYWORD2
+enableInterrupt	KEYWORD2
+disableInterrupt	KEYWORD2
+clearInterrupts	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+DATETIME_SECOND	LITERAL1
+DATETIME_MINUTE	LITERAL1
+DATETIME_HOUR	LITERAL1
+DATETIME_DAY_OF_MONTH	LITERAL1
+DATETIME_MONTH	LITERAL1
+DATETIME_YEAR	LITERAL1
+DATETIME_DAY_OF_WEEK	LITERAL1
+SUN	LITERAL1
+MON	LITERAL1
+TUE	LITERAL1
+WED	LITERAL1
+THU	LITERAL1
+FRI	LITERAL1
+SAT	LITERAL1
