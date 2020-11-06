@@ -311,33 +311,33 @@ bool RV3028C7::setWeekdayAlarm(AlarmMode_t mode, DayOfWeek_t dayOfWeek,
   // Sets alarm registers from arguments
   uint8_t minutesAlarm = convertToBCD(minute);
   uint8_t hoursAlarm = convertToBCD(hour);
-  uint8_t dateAlarm = convertToBCD(dayOfMonth);
+  uint8_t weekdayAlarm = convertToBCD(dayOfWeek);
 
   // Sets AE_x bits according to alarm mode
   if (mode == ALARM_ONCE_PER_DAY_OF_MONTH_OR_WEEK) {
-    dateAlarm &= ~(1 << BP_ALARM_AE);    // AE_WD = 0
+    weekdayAlarm &= ~(1 << BP_ALARM_AE); // AE_WD = 0
     hoursAlarm &= ~(1 << BP_ALARM_AE);   // AE_H = 0
     minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
   } else if (mode == ALARM_ONCE_PER_HOUR_PER_DAY_OF_MONTH_OR_WEEK) {
-    dateAlarm &= ~(1 << BP_ALARM_AE);    // AE_WD = 0
+    weekdayAlarm &= ~(1 << BP_ALARM_AE); // AE_WD = 0
     hoursAlarm |= (1 << BP_ALARM_AE);    // AE_H = 1
     minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
   } else if (mode == ALARM_ONCE_PER_DAY) {
-    dateAlarm |= (1 << BP_ALARM_AE);     // AE_WD = 1
+    weekdayAlarm |= (1 << BP_ALARM_AE);  // AE_WD = 1
     hoursAlarm &= ~(1 << BP_ALARM_AE);   // AE_H = 0
     minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
   } else if (mode == ALARM_ONCE_PER_HOUR) {
-    dateAlarm |= (1 << BP_ALARM_AE);     // AE_WD = 1
+    weekdayAlarm |= (1 << BP_ALARM_AE);  // AE_WD = 1
     hoursAlarm |= (1 << BP_ALARM_AE);    // AE_H = 1
     minutesAlarm &= ~(1 << BP_ALARM_AE); // AE_M = 0
   } else {
     // All disabled
-    dateAlarm |= (1 << BP_ALARM_AE);    // AE_WD = 1
+    weekdayAlarm |= (1 << BP_ALARM_AE); // AE_WD = 1
     hoursAlarm |= (1 << BP_ALARM_AE);   // AE_H = 1
     minutesAlarm |= (1 << BP_ALARM_AE); // AE_M = 1
   }
 
-  uint8_t alarmRegisters[3] = {minutesAlarm, hoursAlarm, dateAlarm};
+  uint8_t alarmRegisters[3] = {minutesAlarm, hoursAlarm, weekdayAlarm};
   return writeBytesToRegisters(REG_ALARM_MINUTES, alarmRegisters, 3);
 }
 
