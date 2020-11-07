@@ -187,7 +187,8 @@ enum ClockOutputFrequency {
   CLKOUT_1HZ = 5,
   CLKOUT_PREDEFINED = 6,
   CLKOUT_LOW = 7
-} typedef uint8_t ClockOutputFrequency_t;
+};
+typedef uint8_t ClockOutputFrequency_t;
 
 enum AlarmMode {
   ALARM_DISABLED = 0,
