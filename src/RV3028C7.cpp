@@ -454,8 +454,7 @@ bool RV3028C7::setPeriodicCountdownTimer(uint16_t timerValue,
 
   // Starts timer
   control1 |= (1 << BP_REG_CONTROL_1_TE);
-  if (!writeByteToRegister(REG_CONTROL_1,
-                           (control1 & ~(1 << BP_REG_CONTROL_1_TE)))) {
+  if (!writeByteToRegister(REG_CONTROL_1, control1)) {
     return false;
   }
 
