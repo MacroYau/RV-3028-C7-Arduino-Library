@@ -38,8 +38,7 @@ uint32_t RV3028C7::getUnixTimestamp() {
   }
 }
 
-bool RV3028C7::setUnixTimestamp(uint32_t secondsSinceEpoch,
-                                bool syncCalendar) {
+bool RV3028C7::setUnixTimestamp(uint32_t secondsSinceEpoch, bool syncCalendar) {
   uint8_t ts[4] = {
       (uint8_t)secondsSinceEpoch, (uint8_t)(secondsSinceEpoch >> 8),
       (uint8_t)(secondsSinceEpoch >> 16), (uint8_t)(secondsSinceEpoch >> 24)};
@@ -272,23 +271,53 @@ bool RV3028C7::synchronize() {
                                DATETIME_COMPONENTS);
 }
 
+bool RV3028C7::enableClockOutput(ClockOutputFrequency_t frequency) {
+  uint8_t clkout = readByteFromEEPROMToRAM(REG_EEPROM_CLKOUT);
+  if ((clkout & (1 << BP_REG_EEPROM_CLKOUT_CLKOE)) > 0 &&
+      (clkout & BM_REG_EEPROM_CLKOUT_FD) == frequency) {
+    // Already enabled at desired frequency
+    return true;
+  }
+
+  clkout |= (1 << BP_REG_EEPROM_CLKOUT_CLKOE); // Enables clock output
+  clkout |= (1 << BP_REG_EEPROM_CLKOUT_CLKSY); // Enables synchronized output
+
+  // Sets to selected frequency
+  clkout &= ~BM_REG_EEPROM_CLKOUT_FD;
+  clkout |= frequency;
+
+  return writeByteFromRAMToEEPROM(REG_EEPROM_CLKOUT, clkout);
+}
+
+bool RV3028C7::disableClockOutput() {
+  uint8_t clkout = readByteFromEEPROMToRAM(REG_EEPROM_CLKOUT);
+  if ((clkout & (1 << BP_REG_EEPROM_CLKOUT_CLKOE)) == 0) {
+    // Already disabled
+    return true;
+  }
+
+  clkout &= ~(1 << BP_REG_EEPROM_CLKOUT_CLKOE); // Disables clock output
+
+  return writeByteFromRAMToEEPROM(REG_EEPROM_CLKOUT, clkout);
+}
+
 bool RV3028C7::setDateAlarm(AlarmMode_t mode, uint8_t dayOfMonth, uint8_t hour,
                             uint8_t minute) {
   // Clears AIE and AF bits to 0
   uint8_t status = readByteFromRegister(REG_STATUS);
-  if (!writeByteToRegister(REG_STATUS, (status & ~(1 << BP_STATUS_AF)))) {
+  if (!writeByteToRegister(REG_STATUS, (status & ~(1 << BP_REG_STATUS_AF)))) {
     return false;
   }
   uint8_t control2 = readByteFromRegister(REG_CONTROL_2);
   if (!writeByteToRegister(REG_CONTROL_2,
-                           (control2 & ~(1 << BP_CONTROL_2_AIE)))) {
+                           (control2 & ~(1 << BP_REG_CONTROL_2_AIE)))) {
     return false;
   }
 
   // Sets WADA bit to 1
   uint8_t control1 = readByteFromRegister(REG_CONTROL_1);
   if (!writeByteToRegister(REG_CONTROL_1,
-                           (control1 | (1 << BP_CONTROL_1_WADA)))) {
+                           (control1 | (1 << BP_REG_CONTROL_1_WADA)))) {
     return false;
   }
 
@@ -329,19 +358,19 @@ bool RV3028C7::setWeekdayAlarm(AlarmMode_t mode, DayOfWeek_t dayOfWeek,
                                uint8_t hour, uint8_t minute) {
   // Clears AIE and AF bits to 0
   uint8_t status = readByteFromRegister(REG_STATUS);
-  if (!writeByteToRegister(REG_STATUS, (status & ~(1 << BP_STATUS_AF)))) {
+  if (!writeByteToRegister(REG_STATUS, (status & ~(1 << BP_REG_STATUS_AF)))) {
     return false;
   }
   uint8_t control2 = readByteFromRegister(REG_CONTROL_2);
   if (!writeByteToRegister(REG_CONTROL_2,
-                           (control2 & ~(1 << BP_CONTROL_2_AIE)))) {
+                           (control2 & ~(1 << BP_REG_CONTROL_2_AIE)))) {
     return false;
   }
 
   // Sets WADA bit to 0
   uint8_t control1 = readByteFromRegister(REG_CONTROL_1);
   if (!writeByteToRegister(REG_CONTROL_1,
-                           (control1 & ~(1 << BP_CONTROL_1_WADA)))) {
+                           (control1 & ~(1 << BP_REG_CONTROL_1_WADA)))) {
     return false;
   }
 
@@ -430,6 +459,158 @@ uint8_t RV3028C7::convertToDecimal(uint8_t bcd) {
 
 uint8_t RV3028C7::convertToBCD(uint8_t decimal) {
   return (decimal / 10 * 16) + (decimal % 10);
+}
+
+bool RV3028C7::waitForEEPROM(uint8_t timeoutMS) {
+  uint32_t deadline = millis() + timeoutMS;
+  bool timeout = false;
+  while ((readByteFromRegister(REG_STATUS) & (1 << BP_REG_STATUS_EEBUSY)) > 0) {
+    if (millis() > deadline) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool RV3028C7::enableEEPROMAutoRefresh() {
+  // Enables auto refresh by clearing EERD control bit to 0
+  uint8_t control1 = readByteFromRegister(REG_CONTROL_1);
+  control1 &= ~(1 << BP_REG_CONTROL_1_EERD);
+  return writeByteToRegister(REG_CONTROL_1, control1);
+}
+
+bool RV3028C7::disableEEPROMAutoRefresh() {
+  // Disables auto refresh by setting EERD control bit to 1
+  uint8_t control1 = readByteFromRegister(REG_CONTROL_1);
+  control1 |= (1 << BP_REG_CONTROL_1_EERD);
+  return writeByteToRegister(REG_CONTROL_1, control1);
+}
+
+bool RV3028C7::refreshConfigurationEEPROMToRAM() {
+  // Ensures EEPROM is not busy
+  if (!waitForEEPROM()) {
+    return false;
+  }
+
+  // Disables auto refresh
+  if (!disableEEPROMAutoRefresh()) {
+    return false;
+  }
+
+  // Sends first EECMD
+  if (!writeByteToRegister(REG_EE_COMMAND, EECMD_FIRST)) {
+    return false;
+  }
+
+  // Sends refresh EECMD and waits ~3.5 ms
+  if (!writeByteToRegister(REG_EE_COMMAND, EECMD_REFRESH)) {
+    return false;
+  }
+  if (waitForEEPROM()) {
+    // Re-enables auto refresh
+    enableEEPROMAutoRefresh();
+  }
+
+  return true;
+}
+
+bool RV3028C7::updateConfigurationEEPROMFromRAM() {
+  // Ensures EEPROM is not busy
+  if (!waitForEEPROM()) {
+    return false;
+  }
+
+  // Disables auto refresh
+  if (!disableEEPROMAutoRefresh()) {
+    return false;
+  }
+
+  // Sends first EECMD
+  if (!writeByteToRegister(REG_EE_COMMAND, EECMD_FIRST)) {
+    return false;
+  }
+
+  // Sends update EECMD and waits ~63 ms
+  if (!writeByteToRegister(REG_EE_COMMAND, EECMD_UPDATE)) {
+    return false;
+  }
+  if (waitForEEPROM()) {
+    // Re-enables auto refresh
+    enableEEPROMAutoRefresh();
+  }
+
+  return true;
+}
+
+bool RV3028C7::readByteFromEEPROMToRAM(uint8_t address) {
+  // Ensures EEPROM is not busy
+  if (!waitForEEPROM()) {
+    return false;
+  }
+
+  // Disables auto refresh
+  if (!disableEEPROMAutoRefresh()) {
+    return false;
+  }
+
+  // Writes address to EEADDR register
+  if (!writeByteToRegister(REG_EE_ADDRESS, address)) {
+    return false;
+  }
+
+  // Sends first EECMD
+  if (!writeByteToRegister(REG_EE_COMMAND, EECMD_FIRST)) {
+    return false;
+  }
+
+  // Sends update EECMD and waits ~1.4 ms
+  if (!writeByteToRegister(REG_EE_COMMAND, EECMD_READ_ONE_EEPROM_BYTE)) {
+    return false;
+  }
+  if (waitForEEPROM()) {
+    // Re-enables auto refresh
+    enableEEPROMAutoRefresh();
+  }
+
+  return readByteFromRegister(address);
+}
+
+bool RV3028C7::writeByteFromRAMToEEPROM(uint8_t address, uint8_t value) {
+  // Ensures EEPROM is not busy
+  if (!waitForEEPROM()) {
+    return false;
+  }
+
+  // Disables auto refresh
+  if (!disableEEPROMAutoRefresh()) {
+    return false;
+  }
+
+  // Writes address to EEADDR register
+  if (!writeByteToRegister(REG_EE_ADDRESS, address)) {
+    return false;
+  }
+
+  // Writes data to EEDATA register
+  if (!writeByteToRegister(REG_EE_DATA, value)) {
+    return false;
+  }
+
+  // Sends first EECMD
+  if (!writeByteToRegister(REG_EE_COMMAND, EECMD_FIRST)) {
+    return false;
+  }
+
+  // Sends update EECMD and waits ~16 ms
+  if (!writeByteToRegister(REG_EE_COMMAND, EECMD_WRITE_ONE_EEPROM_BYTE)) {
+    return false;
+  }
+  if (waitForEEPROM()) {
+    // Re-enables auto refresh
+    enableEEPROMAutoRefresh();
+  }
+
+  return true;
 }
 
 bool RV3028C7::readBytesFromRegisters(uint8_t startAddress,

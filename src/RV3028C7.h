@@ -91,15 +91,68 @@
 #define REG_EEPROM_OFFSET 0x36     // EEPROM Offset
 #define REG_EEPROM_BACKUP 0x37     // EEPROM Backup
 
-/* Bit Positions */
+/* Bit Positions and Bitmasks */
 
+// Alarm Registers
 #define BP_ALARM_AE 7
-#define BP_STATUS_AF 2
-#define BP_CONTROL_1_WADA 5
-#define BP_CONTROL_2_UIE 5
-#define BP_CONTROL_2_TIE 4
-#define BP_CONTROL_2_AIE 3
-#define BP_CONTROL_2_EIE 2
+
+// Status Register
+#define BP_REG_STATUS_EEBUSY 7
+#define BP_REG_STATUS_CLKF 6
+#define BP_REG_STATUS_BSF 5
+#define BP_REG_STATUS_UF 4
+#define BP_REG_STATUS_TF 3
+#define BP_REG_STATUS_AF 2
+#define BP_REG_STATUS_EVF 1
+#define BP_REG_STATUS_PORF 0
+
+// Control 1 Register
+#define BP_REG_CONTROL_1_TRPT 7
+#define BP_REG_CONTROL_1_WADA 5
+#define BP_REG_CONTROL_1_USEL 4
+#define BP_REG_CONTROL_1_EERD 3
+#define BP_REG_CONTROL_1_TE 2
+#define BP_REG_CONTROL_1_TD_MSB 1
+#define BP_REG_CONTROL_1_TD_LSB 0
+
+// Control 2 Register
+#define BP_REG_CONTROL_2_TSE 7
+#define BP_REG_CONTROL_2_CLKIE 6
+#define BP_REG_CONTROL_2_UIE 5
+#define BP_REG_CONTROL_2_TIE 4
+#define BP_REG_CONTROL_2_AIE 3
+#define BP_REG_CONTROL_2_EIE 2
+#define BP_REG_CONTROL_2_12_24 1
+#define BP_REG_CONTROL_2_RESET 0
+
+// Clock Interrupt Mask Register
+#define BP_REG_CLOCK_INT_MASK_CEIE 3
+#define BP_REG_CLOCK_INT_MASK_CAIE 2
+#define BP_REG_CLOCK_INT_MASK_CTIE 1
+#define BP_REG_CLOCK_INT_MASK_CUIE 0
+
+// Event Control Register
+#define BP_REG_EVENT_CONTROL_EHL 6
+#define BP_REG_EVENT_CONTROL_ET_MSB 5
+#define BP_REG_EVENT_CONTROL_ET_LSB 4
+#define BP_REG_EVENT_CONTROL_TSR 2
+#define BP_REG_EVENT_CONTROL_TSOW 1
+#define BP_REG_EVENT_CONTROL_TSS 0
+
+// Configuration EEPROM with RAM Mirror Registers
+#define BP_REG_EEPROM_CLKOUT_CLKOE 7
+#define BP_REG_EEPROM_CLKOUT_CLKSY 6
+#define BP_REG_EEPROM_CLKOUT_PORIE 3
+#define BP_REG_EEPROM_CLKOUT_FD_MSB 2
+#define BM_REG_EEPROM_CLKOUT_FD 0b00000111
+
+/* EEPROM Memory Commands */
+
+#define EECMD_FIRST 0x00
+#define EECMD_UPDATE 0x11
+#define EECMD_REFRESH 0x12
+#define EECMD_WRITE_ONE_EEPROM_BYTE 0x21
+#define EECMD_READ_ONE_EEPROM_BYTE 0x22
 
 #define DATETIME_COMPONENTS 7
 
@@ -125,6 +178,17 @@ enum DayOfWeek {
 };
 typedef uint8_t DayOfWeek_t;
 
+enum ClockOutputFrequency {
+  CLKOUT_32768HZ = 0,
+  CLKOUT_8192HZ = 1,
+  CLKOUT_1024HZ = 2,
+  CLKOUT_64HZ = 3,
+  CLKOUT_32HZ = 4,
+  CLKOUT_1HZ = 5,
+  CLKOUT_PREDEFINED = 6,
+  CLKOUT_LOW = 7
+} typedef uint8_t ClockOutputFrequency_t;
+
 enum AlarmMode {
   ALARM_DISABLED = 0,
   ALARM_ONCE_PER_DAY_OF_MONTH_OR_WEEK = 1,
@@ -135,10 +199,10 @@ enum AlarmMode {
 typedef uint8_t AlarmMode_t;
 
 enum InterruptType {
-  INTERRPUT_PERIODIC_TIME_UPDATE = BP_CONTROL_2_UIE,
-  INTERRUPT_PERIODIC_COUNTDOWN_TIMER = BP_CONTROL_2_TIE,
-  INTERRUPT_ALARM = BP_CONTROL_2_AIE,
-  INTERRUPT_EXTERNAL_EVENT = BP_CONTROL_2_EIE
+  INTERRPUT_PERIODIC_TIME_UPDATE = BP_REG_CONTROL_2_UIE,
+  INTERRUPT_PERIODIC_COUNTDOWN_TIMER = BP_REG_CONTROL_2_TIE,
+  INTERRUPT_ALARM = BP_REG_CONTROL_2_AIE,
+  INTERRUPT_EXTERNAL_EVENT = BP_REG_CONTROL_2_EIE
 };
 typedef uint8_t InterruptType_t;
 
@@ -161,6 +225,9 @@ public:
   void setDateTimeComponent(DateTimeComponent_t component, uint8_t value);
   bool synchronize();
 
+  bool enableClockOutput(ClockOutputFrequency_t frequency);
+  bool disableClockOutput();
+
   bool setDateAlarm(AlarmMode_t mode, uint8_t dayOfMonth, uint8_t hour = 0,
                     uint8_t minute = 0);
   bool setWeekdayAlarm(AlarmMode_t mode, DayOfWeek_t dayOfWeek,
@@ -179,6 +246,14 @@ public:
 
   uint8_t convertToDecimal(uint8_t bcd);
   uint8_t convertToBCD(uint8_t decimal);
+
+  bool waitForEEPROM(uint8_t timeoutMS = 100);
+  bool enableEEPROMAutoRefresh();
+  bool disableEEPROMAutoRefresh();
+  bool refreshConfigurationEEPROMToRAM();
+  bool updateConfigurationEEPROMFromRAM();
+  bool readByteFromEEPROMToRAM(uint8_t address);
+  bool writeByteFromRAMToEEPROM(uint8_t address, uint8_t value);
 
   bool readBytesFromRegisters(uint8_t startAddress, uint8_t *destination,
                               uint8_t length);
