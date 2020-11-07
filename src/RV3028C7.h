@@ -253,8 +253,8 @@ public:
   bool disableEEPROMAutoRefresh();
   bool refreshConfigurationEEPROMToRAM();
   bool updateConfigurationEEPROMFromRAM();
-  bool readByteFromEEPROMToRAM(uint8_t address);
-  bool writeByteFromRAMToEEPROM(uint8_t address, uint8_t value);
+  uint8_t readByteFromEEPROM(uint8_t address);
+  bool writeByteToEEPROM(uint8_t address, uint8_t value);
 
   bool readBytesFromRegisters(uint8_t startAddress, uint8_t *destination,
                               uint8_t length);

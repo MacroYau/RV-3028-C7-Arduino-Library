@@ -272,7 +272,7 @@ bool RV3028C7::synchronize() {
 }
 
 bool RV3028C7::enableClockOutput(ClockOutputFrequency_t frequency) {
-  uint8_t clkout = readByteFromEEPROMToRAM(REG_EEPROM_CLKOUT);
+  uint8_t clkout = readByteFromEEPROM(REG_EEPROM_CLKOUT);
   if ((clkout & (1 << BP_REG_EEPROM_CLKOUT_CLKOE)) > 0 &&
       (clkout & BM_REG_EEPROM_CLKOUT_FD) == frequency) {
     // Already enabled at desired frequency
@@ -286,19 +286,20 @@ bool RV3028C7::enableClockOutput(ClockOutputFrequency_t frequency) {
   clkout &= ~BM_REG_EEPROM_CLKOUT_FD;
   clkout |= frequency;
 
-  return writeByteFromRAMToEEPROM(REG_EEPROM_CLKOUT, clkout);
+  return writeByteToEEPROM(REG_EEPROM_CLKOUT, clkout);
 }
 
 bool RV3028C7::disableClockOutput() {
-  uint8_t clkout = readByteFromEEPROMToRAM(REG_EEPROM_CLKOUT);
+  uint8_t clkout = readByteFromEEPROM(REG_EEPROM_CLKOUT);
   if ((clkout & (1 << BP_REG_EEPROM_CLKOUT_CLKOE)) == 0) {
     // Already disabled
     return true;
   }
 
   clkout &= ~(1 << BP_REG_EEPROM_CLKOUT_CLKOE); // Disables clock output
+  clkout |= BM_REG_EEPROM_CLKOUT_FD;            // Resets to LOW frequency mode
 
-  return writeByteFromRAMToEEPROM(REG_EEPROM_CLKOUT, clkout);
+  return writeByteToEEPROM(REG_EEPROM_CLKOUT, clkout);
 }
 
 bool RV3028C7::setDateAlarm(AlarmMode_t mode, uint8_t dayOfMonth, uint8_t hour,
@@ -487,13 +488,13 @@ bool RV3028C7::disableEEPROMAutoRefresh() {
 }
 
 bool RV3028C7::refreshConfigurationEEPROMToRAM() {
-  // Ensures EEPROM is not busy
-  if (!waitForEEPROM()) {
+  // Disables auto refresh
+  if (!disableEEPROMAutoRefresh()) {
     return false;
   }
 
-  // Disables auto refresh
-  if (!disableEEPROMAutoRefresh()) {
+  // Ensures EEPROM is not busy
+  if (!waitForEEPROM()) {
     return false;
   }
 
@@ -515,13 +516,13 @@ bool RV3028C7::refreshConfigurationEEPROMToRAM() {
 }
 
 bool RV3028C7::updateConfigurationEEPROMFromRAM() {
-  // Ensures EEPROM is not busy
-  if (!waitForEEPROM()) {
+  // Disables auto refresh
+  if (!disableEEPROMAutoRefresh()) {
     return false;
   }
 
-  // Disables auto refresh
-  if (!disableEEPROMAutoRefresh()) {
+  // Ensures EEPROM is not busy
+  if (!waitForEEPROM()) {
     return false;
   }
 
@@ -542,14 +543,14 @@ bool RV3028C7::updateConfigurationEEPROMFromRAM() {
   return true;
 }
 
-bool RV3028C7::readByteFromEEPROMToRAM(uint8_t address) {
-  // Ensures EEPROM is not busy
-  if (!waitForEEPROM()) {
+bool RV3028C7::readByteFromEEPROM(uint8_t address) {
+  // Disables auto refresh
+  if (!disableEEPROMAutoRefresh()) {
     return false;
   }
 
-  // Disables auto refresh
-  if (!disableEEPROMAutoRefresh()) {
+  // Ensures EEPROM is not busy
+  if (!waitForEEPROM()) {
     return false;
   }
 
@@ -572,19 +573,19 @@ bool RV3028C7::readByteFromEEPROMToRAM(uint8_t address) {
     enableEEPROMAutoRefresh();
   }
 
-  return readByteFromRegister(address);
+  return readByteFromRegister(REG_EE_DATA);
 }
 
-bool RV3028C7::writeByteFromRAMToEEPROM(uint8_t address, uint8_t value) {
-  // Ensures EEPROM is not busy
-  if (!waitForEEPROM()) {
-    return false;
-  }
-
+bool RV3028C7::writeByteToEEPROM(uint8_t address, uint8_t value) {
   // Disables auto refresh
   if (!disableEEPROMAutoRefresh()) {
     return false;
   }
+
+  // Ensures EEPROM is not busy
+  if (!waitForEEPROM()) {
+    return false;
+  }  
 
   // Writes address to EEADDR register
   if (!writeByteToRegister(REG_EE_ADDRESS, address)) {
