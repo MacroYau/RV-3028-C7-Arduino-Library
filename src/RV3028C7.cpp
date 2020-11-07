@@ -435,6 +435,11 @@ bool RV3028C7::setPeriodicCountdownTimer(uint16_t timerValue,
                            (control1 & ~(1 << BP_REG_CONTROL_1_TE)))) {
     return false;
   }
+  uint8_t control2 = readByteFromRegister(REG_CONTROL_2);
+  if (!writeByteToRegister(REG_CONTROL_2,
+                           (control2 & ~(1 << BP_REG_CONTROL_2_TIE)))) {
+    return false;
+  }
 
   // Sets TRPT bit to 1 for a repeating timer
   if (repeat) {
