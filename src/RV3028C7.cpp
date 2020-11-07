@@ -418,6 +418,60 @@ bool RV3028C7::setHourlyAlarm(uint8_t minute) {
   return setDateAlarm(ALARM_ONCE_PER_HOUR, 1, 0, minute);
 }
 
+bool RV3028C7::setPeriodicCountdownTimer(uint16_t timerValue,
+                                         TimerClockFrequency_t frequency,
+                                         bool repeat) {
+  if (timerValue < 1) {
+    return false;
+  }
+
+  // Clears TE, TIE, and TF bits to 0
+  uint8_t status = readByteFromRegister(REG_STATUS);
+  if (!writeByteToRegister(REG_STATUS, (status & ~(1 << BP_REG_STATUS_TF)))) {
+    return false;
+  }
+  uint8_t control1 = readByteFromRegister(REG_CONTROL_1);
+  if (!writeByteToRegister(REG_CONTROL_1,
+                           (control1 & ~(1 << BP_REG_CONTROL_1_TE)))) {
+    return false;
+  }
+  uint8_t control2 = readByteFromRegister(REG_CONTROL_2);
+  if (!writeByteToRegister(REG_CONTROL_2,
+                           (control2 & ~(1 << BP_REG_CONTROL_2_TIE)))) {
+    return false;
+  }
+
+  // Sets TRPT bit to 1 for a repeating timer
+  if (repeat) {
+    control1 |= (1 << BP_REG_CONTROL_1_TRPT);
+  } else {
+    control1 &= ~(1 << BP_REG_CONTROL_1_TRPT);
+  }
+  if (!writeByteToRegister(REG_CONTROL_1,
+                           (status & ~(1 << BP_REG_CONTROL_1_TE)))) {
+    return false;
+  }
+
+  // Sets timer value and clock frequency
+  if (!writeByteToRegister(REG_TIMER_VALUE_0, (uint8_t)timerValue)) {
+    return false;
+  }
+  if (!writeByteToRegister(REG_TIMER_VALUE_1, (uint8_t)(timerValue >> 8))) {
+    return false;
+  }
+  control1 |= (frequency << BP_REG_CONTROL_1_TD_LSB);
+
+  // Starts timer
+  control1 |= (1 << BP_REG_CONTROL_1_TE);
+  uint8_t control1 = readByteFromRegister(REG_CONTROL_1);
+  if (!writeByteToRegister(REG_CONTROL_1,
+                           (control1 & ~(1 << BP_REG_CONTROL_1_TE)))) {
+    return false;
+  }
+
+  return true;
+}
+
 bool RV3028C7::enableInterrupt(InterruptType_t type) {
   uint8_t control2 = readByteFromRegister(REG_CONTROL_2);
   control2 |= (1 << type);

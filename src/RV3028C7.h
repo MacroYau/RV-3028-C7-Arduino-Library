@@ -207,6 +207,14 @@ enum InterruptType {
 };
 typedef uint8_t InterruptType_t;
 
+enum TimerClockFrequency {
+  TIMER_4096HZ = 0,
+  TIMER_64HZ = 1,
+  TIMER_1HZ = 2,
+  TIMER_MINUTE = 3
+};
+typedef uint8_t TimerClockFrequency_t;
+
 class RV3028C7 {
 public:
   RV3028C7();
@@ -235,6 +243,10 @@ public:
                        uint8_t hour = 0, uint8_t minute = 0);
   bool setDailyAlarm(uint8_t hour = 0, uint8_t minute = 0);
   bool setHourlyAlarm(uint8_t minute = 0);
+
+  bool setPeriodicCountdownTimer(uint16_t timerValue,
+                                 TimerClockFrequency_t frequency,
+                                 bool repeat = true);
 
   bool enableInterrupt(InterruptType_t type);
   bool disableInterrupt(InterruptType_t type);
