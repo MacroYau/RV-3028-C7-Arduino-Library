@@ -543,7 +543,7 @@ bool RV3028C7::updateConfigurationEEPROMFromRAM() {
   return true;
 }
 
-bool RV3028C7::readByteFromEEPROM(uint8_t address) {
+uint8_t RV3028C7::readByteFromEEPROM(uint8_t address) {
   // Disables auto refresh
   if (!disableEEPROMAutoRefresh()) {
     return false;
