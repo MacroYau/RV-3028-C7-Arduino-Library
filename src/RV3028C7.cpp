@@ -286,7 +286,8 @@ bool RV3028C7::enableClockOutput(ClockOutputFrequency_t frequency) {
   clkout &= ~BM_REG_EEPROM_CLKOUT_FD;
   clkout |= frequency;
 
-  return writeByteToEEPROM(REG_EEPROM_CLKOUT, clkout);
+  return writeByteToRegister(REG_EEPROM_CLKOUT, clkout) &&
+         writeByteToEEPROM(REG_EEPROM_CLKOUT, clkout);
 }
 
 bool RV3028C7::disableClockOutput() {
@@ -299,7 +300,8 @@ bool RV3028C7::disableClockOutput() {
   clkout &= ~(1 << BP_REG_EEPROM_CLKOUT_CLKOE); // Disables clock output
   clkout |= BM_REG_EEPROM_CLKOUT_FD;            // Resets to LOW frequency mode
 
-  return writeByteToEEPROM(REG_EEPROM_CLKOUT, clkout);
+  return writeByteToRegister(REG_EEPROM_CLKOUT, clkout) &&
+         writeByteToEEPROM(REG_EEPROM_CLKOUT, clkout);
 }
 
 bool RV3028C7::setDateAlarm(AlarmMode_t mode, uint8_t dayOfMonth, uint8_t hour,
@@ -585,7 +587,7 @@ bool RV3028C7::writeByteToEEPROM(uint8_t address, uint8_t value) {
   // Ensures EEPROM is not busy
   if (!waitForEEPROM()) {
     return false;
-  }  
+  }
 
   // Writes address to EEADDR register
   if (!writeByteToRegister(REG_EE_ADDRESS, address)) {

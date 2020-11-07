@@ -32,6 +32,9 @@ void setup() {
     delay(5000);
   }
 
+  rtc.disableClockOutput();
+  delay(1000);
+
   rtc.enableClockOutput(CLKOUT_1HZ); // 1 Hz clock output
 }
 
