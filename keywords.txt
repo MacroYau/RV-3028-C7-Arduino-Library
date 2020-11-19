@@ -33,6 +33,7 @@ startPeriodicCountdownTimer KEYWORD2
 stopPeriodicCountdownTimer  KEYWORD2
 enableInterrupt	KEYWORD2
 disableInterrupt	KEYWORD2
+disableAllInterrupts    KEYWORD2
 isInterruptDetected	KEYWORD2
 clearInterrupt	KEYWORD2
 clearAllInterrupts  KEYWORD2

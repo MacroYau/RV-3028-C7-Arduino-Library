@@ -485,6 +485,12 @@ bool RV3028C7::disableInterrupt(InterruptType_t type) {
   return writeByteToRegister(REG_CONTROL_2, control2);
 }
 
+bool RV3028C7::disableAllInterrupts() {
+  uint8_t control2 = readByteFromRegister(REG_CONTROL_2);
+  control2 &= ~BM_REG_CONTROL_2_INTERRUPT_ENABLE_ALL;
+  return writeByteToRegister(REG_CONTROL_2, control2);
+}
+
 bool RV3028C7::isInterruptDetected(InterruptType_t type) {
   uint8_t status = readByteFromRegister(REG_STATUS);
   status &= (1 << (type - 1)); // Interrupt flag bit positions are offset by 1

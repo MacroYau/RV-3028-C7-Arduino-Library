@@ -125,6 +125,7 @@
 #define BP_REG_CONTROL_2_EIE 2
 #define BP_REG_CONTROL_2_12_24 1
 #define BP_REG_CONTROL_2_RESET 0
+#define BM_REG_CONTROL_2_INTERRUPT_ENABLE_ALL 0b00111100
 
 // Clock Interrupt Mask Register
 #define BP_REG_CLOCK_INT_MASK_CEIE 3
@@ -254,6 +255,7 @@ public:
 
   bool enableInterrupt(InterruptType_t type);
   bool disableInterrupt(InterruptType_t type);
+  bool disableAllInterrupts();
   bool isInterruptDetected(InterruptType_t type);
   bool clearInterrupt(InterruptType_t type);
   bool clearAllInterrupts();
