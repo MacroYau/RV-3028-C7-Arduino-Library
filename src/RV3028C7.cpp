@@ -456,14 +456,19 @@ bool RV3028C7::setPeriodicCountdownTimer(uint16_t timerValue,
     return false;
   }
   control1 |= (frequency << BP_REG_CONTROL_1_TD_LSB);
+  return writeByteToRegister(REG_CONTROL_1, control1);
+}
 
-  // Starts timer
+bool RV3028C7::startPeriodicCountdownTimer() {
+  uint8_t control1 = readByteFromRegister(REG_CONTROL_1);
   control1 |= (1 << BP_REG_CONTROL_1_TE);
-  if (!writeByteToRegister(REG_CONTROL_1, control1)) {
-    return false;
-  }
+  return writeByteToRegister(REG_CONTROL_1, control1);
+}
 
-  return true;
+bool RV3028C7::stopPeriodicCountdownTimer() {
+  uint8_t control1 = readByteFromRegister(REG_CONTROL_1);
+  control1 &= ~(1 << BP_REG_CONTROL_1_TE);
+  return writeByteToRegister(REG_CONTROL_1, control1);
 }
 
 bool RV3028C7::enableInterrupt(InterruptType_t type) {

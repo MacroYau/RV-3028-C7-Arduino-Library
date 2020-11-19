@@ -36,6 +36,7 @@ void setup() {
   rtc.setPeriodicCountdownTimer(/*timerValue=*/5, /*frequency=*/TIMER_1HZ,
                                 /*repeat=*/true);
   rtc.enableInterrupt(INTERRUPT_PERIODIC_COUNTDOWN_TIMER);
+  rtc.startPeriodicCountdownTimer();
 
   Serial.print("Countdown Timer Started: ");
   Serial.println(rtc.getCurrentDateTime());

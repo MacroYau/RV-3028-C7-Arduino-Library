@@ -28,6 +28,8 @@ setWeekdayAlarm	KEYWORD2
 setDailyAlarm	KEYWORD2
 setHourlyAlarm	KEYWORD2
 setPeriodicCountdownTimer	KEYWORD2
+startPeriodicCountdownTimer KEYWORD2
+stopPeriodicCountdownTimer  KEYWORD2
 enableInterrupt	KEYWORD2
 disableInterrupt	KEYWORD2
 isInterruptDetected	KEYWORD2

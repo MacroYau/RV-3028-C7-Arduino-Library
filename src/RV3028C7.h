@@ -247,6 +247,8 @@ public:
   bool setPeriodicCountdownTimer(uint16_t timerValue,
                                  TimerClockFrequency_t frequency,
                                  bool repeat = true);
+  bool startPeriodicCountdownTimer();
+  bool stopPeriodicCountdownTimer();
 
   bool enableInterrupt(InterruptType_t type);
   bool disableInterrupt(InterruptType_t type);
