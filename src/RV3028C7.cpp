@@ -495,6 +495,12 @@ bool RV3028C7::clearInterrupt(InterruptType_t type) {
   return writeByteToRegister(REG_STATUS, status);
 }
 
+bool RV3028C7::clearAllInterrupts() {
+  uint8_t status = readByteFromRegister(REG_STATUS);
+  status &= ~BM_REG_STATUS_INTERRUPT_FLAGS;
+  return writeByteToRegister(REG_STATUS, status);
+}
+
 uint32_t RV3028C7::convertToUnixTimestamp(uint16_t year, uint8_t month,
                                           uint8_t dayOfMonth, uint8_t hour,
                                           uint8_t minute, uint8_t second) {

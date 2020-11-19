@@ -105,6 +105,7 @@
 #define BP_REG_STATUS_AF 2
 #define BP_REG_STATUS_EVF 1
 #define BP_REG_STATUS_PORF 0
+#define BM_REG_STATUS_INTERRUPT_FLAGS 0b01011111
 
 // Control 1 Register
 #define BP_REG_CONTROL_1_TRPT 7
@@ -254,6 +255,7 @@ public:
   bool disableInterrupt(InterruptType_t type);
   bool isInterruptDetected(InterruptType_t type);
   bool clearInterrupt(InterruptType_t type);
+  bool clearAllInterrupts();
 
   uint32_t convertToUnixTimestamp(uint16_t year, uint8_t month,
                                   uint8_t dayOfMonth, uint8_t hour,

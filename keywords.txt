@@ -34,6 +34,7 @@ enableInterrupt	KEYWORD2
 disableInterrupt	KEYWORD2
 isInterruptDetected	KEYWORD2
 clearInterrupt	KEYWORD2
+clearAllInterrupts  KEYWORD2
 convertToUnixTimestamp	KEYWORD2
 convertToDecimal	KEYWORD2
 convertToBCD	KEYWORD2
