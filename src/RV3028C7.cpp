@@ -418,6 +418,8 @@ bool RV3028C7::setHourlyAlarm(uint8_t minute) {
   return setDateAlarm(ALARM_ONCE_PER_HOUR, 1, 0, minute);
 }
 
+bool RV3028C7::disableAlarm() { return setDateAlarm(ALARM_DISABLED, 1, 0, 0); }
+
 bool RV3028C7::setPeriodicCountdownTimer(uint16_t timerValue,
                                          TimerClockFrequency_t frequency,
                                          bool repeat) {

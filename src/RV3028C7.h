@@ -244,6 +244,7 @@ public:
                        uint8_t hour = 0, uint8_t minute = 0);
   bool setDailyAlarm(uint8_t hour = 0, uint8_t minute = 0);
   bool setHourlyAlarm(uint8_t minute = 0);
+  bool disableAlarm();
 
   bool setPeriodicCountdownTimer(uint16_t timerValue,
                                  TimerClockFrequency_t frequency,
