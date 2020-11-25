@@ -39,18 +39,23 @@ uint32_t RV3028C7::getUnixTimestamp() {
 }
 
 bool RV3028C7::setUnixTimestamp(uint32_t secondsSinceEpoch, bool syncCalendar) {
+  bool success = false;
+
   uint8_t ts[4] = {
       (uint8_t)secondsSinceEpoch, (uint8_t)(secondsSinceEpoch >> 8),
       (uint8_t)(secondsSinceEpoch >> 16), (uint8_t)(secondsSinceEpoch >> 24)};
-  writeBytesToRegisters(REG_UNIX_TIME_0, ts, 4);
+  success = writeBytesToRegisters(REG_UNIX_TIME_0, ts, 4);
 
   if (syncCalendar) {
     time_t t = secondsSinceEpoch;
     struct tm *dateTime = gmtime(&t);
-    setDateTime(dateTime->tm_year + 1900, dateTime->tm_mon + 1,
-                dateTime->tm_mday, static_cast<DayOfWeek_t>(dateTime->tm_wday),
-                dateTime->tm_hour, dateTime->tm_min, dateTime->tm_sec, false);
+    success = setDateTime(dateTime->tm_year + 1900, dateTime->tm_mon + 1,
+                          dateTime->tm_mday, SUN, dateTime->tm_hour,
+                          dateTime->tm_min, dateTime->tm_sec, false);
+    success = synchronize();
   }
+
+  return success;
 }
 
 char *RV3028C7::getCurrentDateTime() {
