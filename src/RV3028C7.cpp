@@ -85,6 +85,25 @@ char *RV3028C7::getCurrentDateTime()
   return iso8601;
 }
 
+uint8_t RV3028C7::getCurrentDateTimeComponent(DateTimeComponent_t component)
+{
+  // Updates RTC date time value to array
+  readBytesFromRegisters(REG_CLOCK_SECONDS, _dateTime, DATETIME_COMPONENTS);
+
+  /*
+  component:
+  DATETIME_SECOND
+  DATETIME_MINUTE
+  DATETIME_HOUR
+  DATETIME_DAY_OF_WEEK
+  DATETIME_DAY_OF_MONTH
+  DATETIME_MONTH
+  DATETIME_YEAR
+  */
+
+  return convertToDecimal(_dateTime[component]);
+}
+
 void RV3028C7::setDateTimeFromISO8601(String iso8601)
 {
   return setDateTimeFromISO8601(iso8601.c_str());

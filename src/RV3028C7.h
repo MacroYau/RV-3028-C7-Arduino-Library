@@ -233,6 +233,7 @@ public:
   bool setUnixTimestamp(uint32_t secondsSinceEpoch, bool syncCalendar = true);
 
   char *getCurrentDateTime();
+  uint8_t getCurrentDateTimeComponent(DateTimeComponent_t component);
   void setDateTimeFromISO8601(String iso8601);
   void setDateTimeFromISO8601(const char *iso8601);
   void setDateTimeFromHTTPHeader(String str);
